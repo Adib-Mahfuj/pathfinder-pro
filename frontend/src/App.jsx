@@ -2,6 +2,9 @@ import { useState, useRef } from "react";
 import Grid from "./components/Grid";
 import { createGrid, setWall } from "./utils/grid";
 import { START, END } from "./utils/constants";
+import { bfs } from "./algorithms/bfs";
+import { dijkstra } from "./algorithms/dijkstra";
+import { astar } from "./algorithms/astar";
 
 export default function App() {
   const [grid, setGrid] = useState(createGrid);
@@ -63,6 +66,25 @@ export default function App() {
     setEnd(END);
   };
 
+  // Temporary: runs all algorithms and prints results in the console
+  const testAlgorithms = () => {
+    const algorithms = [
+      ["BFS", bfs],
+      ["Dijkstra", dijkstra],
+      ["A*", astar],
+    ];
+    algorithms.forEach(([name, run]) => {
+      const { visitedInOrder, path } = run(grid, start, end);
+      console.log(
+        name,
+        "| visited:",
+        visitedInOrder.length,
+        "| path length:",
+        path.length,
+      );
+    });
+  };
+
   return (
     <div className="min-h-screen bg-slate-900 text-white p-6">
       <h1 className="text-3xl font-bold mb-4">PathFinder Pro 🧭</h1>
@@ -79,6 +101,12 @@ export default function App() {
           className="px-4 py-2 rounded bg-slate-700 hover:bg-slate-600"
         >
           Reset
+        </button>
+        <button
+          onClick={testAlgorithms}
+          className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500"
+        >
+          Test (console)
         </button>
 
         <div className="flex items-center gap-4 text-sm text-slate-300">
