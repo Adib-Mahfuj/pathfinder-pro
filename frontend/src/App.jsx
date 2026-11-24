@@ -6,6 +6,7 @@ import { nodeKey } from "./algorithms/helpers";
 import { bfs } from "./algorithms/bfs";
 import { dijkstra } from "./algorithms/dijkstra";
 import { astar } from "./algorithms/astar";
+import { recursiveDivisionWalls, randomWalls } from "./utils/maze";
 
 // Available algorithms and their functions
 const ALGORITHMS = {
@@ -23,6 +24,9 @@ const SPEEDS = {
 
 // Delay (in ms) between two nodes of the final path
 const PATH_DELAY = 35;
+
+// Delay (in ms) between two walls while a maze is being built
+const MAZE_DELAY = 6;
 
 export default function App() {
   const [grid, setGrid] = useState(createGrid);
@@ -78,7 +82,11 @@ export default function App() {
     clearVisuals();
 
     // Run the selected algorithm instantly, then replay the result slowly
-    const { visitedInOrder, path } = ALGORITHMS[algorithm].run(grid, start, end);
+    const { visitedInOrder, path } = ALGORITHMS[algorithm].run(
+      grid,
+      start,
+      end,
+    );
     const delay = SPEEDS[speed].delay;
 
     setIsRunning(true);
@@ -93,19 +101,25 @@ export default function App() {
     // 2) Animate the shortest path after all visited nodes are shown
     const pathStart = visitedInOrder.length * delay + 200;
     path.forEach((node, i) => {
-      schedule(() => {
-        setPathSet((prev) => new Set(prev).add(nodeKey(node)));
-      }, pathStart + i * PATH_DELAY);
+      schedule(
+        () => {
+          setPathSet((prev) => new Set(prev).add(nodeKey(node)));
+        },
+        pathStart + i * PATH_DELAY,
+      );
     });
 
     // 3) Unlock the grid and show the result
-    schedule(() => {
-      setResult({
-        visitedCount: visitedInOrder.length,
-        pathLength: path.length,
-      });
-      setIsRunning(false);
-    }, pathStart + path.length * PATH_DELAY + 100);
+    schedule(
+      () => {
+        setResult({
+          visitedCount: visitedInOrder.length,
+          pathLength: path.length,
+        });
+        setIsRunning(false);
+      },
+      pathStart + path.length * PATH_DELAY + 100,
+    );
   };
 
   const handleMouseDown = (row, col) => {
@@ -161,6 +175,28 @@ export default function App() {
     setGrid(createGrid());
     setStart(START);
     setEnd(END);
+  };
+
+  // Build a maze or random walls, one wall at a time (animated)
+  const generateMaze = (type) => {
+    if (isRunning) return;
+    clearVisuals();
+
+    // Start from an empty grid
+    setGrid(createGrid());
+
+    const allWalls =
+      type === "maze" ? recursiveDivisionWalls() : randomWalls(0.3);
+
+    // Never put a wall on the start or end node
+    const walls = allWalls.filter(([r, c]) => !isStart(r, c) && !isEnd(r, c));
+
+    // Lock the grid, add walls one by one, then unlock
+    setIsRunning(true);
+    walls.forEach(([r, c], i) => {
+      schedule(() => setGrid((g) => setWall(g, r, c, true)), i * MAZE_DELAY);
+    });
+    schedule(() => setIsRunning(false), walls.length * MAZE_DELAY + 50);
   };
 
   const btn =
@@ -228,6 +264,20 @@ export default function App() {
           className={`${btn} bg-slate-700 hover:bg-slate-600`}
         >
           Reset
+        </button>
+        <button
+          onClick={() => generateMaze("maze")}
+          disabled={isRunning}
+          className={`${btn} bg-purple-600 hover:bg-purple-500`}
+        >
+          Generate Maze
+        </button>
+        <button
+          onClick={() => generateMaze("random")}
+          disabled={isRunning}
+          className={`${btn} bg-purple-600 hover:bg-purple-500`}
+        >
+          Random Walls
         </button>
       </div>
 
