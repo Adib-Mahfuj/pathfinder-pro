@@ -8,7 +8,9 @@ export default function App() {
   const [start, setStart] = useState(START);
   const [end, setEnd] = useState(END);
 
-  // Tracks the current mouse action: 'start' | 'end' | 'draw' | 'erase' | null  const dragMode = useRef(null);
+  // What the mouse is doing right now: 'start' | 'end' | 'draw' | 'erase' | null
+  // useRef is used so changing it does not trigger a re-render
+  const dragMode = useRef(null);
 
   const isStart = (r, c) => start.row === r && start.col === c;
   const isEnd = (r, c) => end.row === r && end.col === c;
@@ -19,7 +21,8 @@ export default function App() {
     } else if (isEnd(row, col)) {
       dragMode.current = "end";
     } else {
-      // Erases the wall if it exists; otherwise, draws a wall      const mode = grid[row][col].isWall ? "erase" : "draw";
+      // If the node is already a wall, erase it; otherwise draw a wall
+      const mode = grid[row][col].isWall ? "erase" : "draw";
       dragMode.current = mode;
       setGrid((g) => setWall(g, row, col, mode === "draw"));
     }
@@ -32,12 +35,15 @@ export default function App() {
     if (mode === "start") {
       if (isEnd(row, col)) return;
       setStart({ row, col });
+      // Remove a wall if the start node is dragged onto it
       setGrid((g) => (g[row][col].isWall ? setWall(g, row, col, false) : g));
     } else if (mode === "end") {
       if (isStart(row, col)) return;
       setEnd({ row, col });
+      // Remove a wall if the end node is dragged onto it
       setGrid((g) => (g[row][col].isWall ? setWall(g, row, col, false) : g));
     } else {
+      // Do not draw or erase on the start/end nodes
       if (isStart(row, col) || isEnd(row, col)) return;
       setGrid((g) => setWall(g, row, col, mode === "draw"));
     }
@@ -47,8 +53,10 @@ export default function App() {
     dragMode.current = null;
   };
 
+  // Remove all walls but keep start/end where they are
   const clearWalls = () => setGrid(createGrid());
 
+  // Reset walls and move start/end back to the default positions
   const resetAll = () => {
     setGrid(createGrid());
     setStart(START);
