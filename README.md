@@ -30,6 +30,17 @@ Draw walls, move start/end points, and watch A*, Dijkstra and BFS find the short
    ```
 4. Check it works: http://localhost:8080/api/health
 
+## API Endpoints
+| Method | URL | Description |
+|---|---|---|
+| GET | /api/health | Health check |
+| POST | /api/mazes | Save a maze |
+| GET | /api/mazes | List saved mazes |
+| GET | /api/mazes/{id} | Load one maze |
+| DELETE | /api/mazes/{id} | Delete a maze |
+| POST | /api/runs | Save an algorithm run |
+| GET | /api/runs | Latest 50 runs |
+
 ## Getting Started
 
 ```bash
