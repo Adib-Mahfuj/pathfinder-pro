@@ -8,6 +8,6 @@ import com.pathfinder.entity.RunRecord;
 
 public interface RunRecordRepository extends JpaRepository<RunRecord, Long> {
 
-    // The latest 50 runs, newest first
-    List<RunRecord> findTop50ByOrderByCreatedAtDesc();
+    // The latest 50 runs of one user, newest first
+    List<RunRecord> findTop50ByOwnerIdOrderByCreatedAtDesc(Long ownerId);
 }

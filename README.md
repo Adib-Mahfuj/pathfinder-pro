@@ -30,16 +30,25 @@ Draw walls, move start/end points, and watch A*, Dijkstra and BFS find the short
    ```
 4. Check it works: http://localhost:8080/api/health
 
+## Authentication
+The API uses JWT. Register or log in to get a token, then send it with every request:
+`Authorization: Bearer <token>`
+
+Add a `app.jwt.secret` (at least 40 random characters) to `application-local.properties`.
+
 ## API Endpoints
-| Method | URL | Description |
-|---|---|---|
-| GET | /api/health | Health check |
-| POST | /api/mazes | Save a maze |
-| GET | /api/mazes | List saved mazes |
-| GET | /api/mazes/{id} | Load one maze |
-| DELETE | /api/mazes/{id} | Delete a maze |
-| POST | /api/runs | Save an algorithm run |
-| GET | /api/runs | Latest 50 runs |
+| Method | URL | Auth | Description |
+|---|---|---|---|
+| GET | /api/health | No | Health check |
+| POST | /api/auth/register | No | Create an account |
+| POST | /api/auth/login | No | Log in and get a token |
+| GET | /api/auth/me | Yes | Current user |
+| POST | /api/mazes | Yes | Save a maze |
+| GET | /api/mazes | Yes | List my mazes |
+| GET | /api/mazes/{id} | Yes | Load one of my mazes |
+| DELETE | /api/mazes/{id} | Yes | Delete one of my mazes |
+| POST | /api/runs | Yes | Save an algorithm run |
+| GET | /api/runs | Yes | My latest 50 runs |
 
 ## Getting Started
 

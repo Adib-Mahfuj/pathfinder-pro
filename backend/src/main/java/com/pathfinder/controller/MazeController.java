@@ -3,6 +3,7 @@ package com.pathfinder.controller;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.pathfinder.dto.MazeRequest;
 import com.pathfinder.dto.MazeResponse;
 import com.pathfinder.dto.MazeSummary;
+import com.pathfinder.security.AuthUser;
 import com.pathfinder.service.MazeService;
 
 import jakarta.validation.Valid;
@@ -29,26 +31,27 @@ public class MazeController {
         this.service = service;
     }
 
-    // @Valid checks the rules written in MazeRequest (invalid data gives 400)
+    // @AuthenticationPrincipal gives us the logged-in user taken from the token
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public MazeResponse create(@Valid @RequestBody MazeRequest request) {
-        return service.create(request);
+    public MazeResponse create(@AuthenticationPrincipal AuthUser user,
+                               @Valid @RequestBody MazeRequest request) {
+        return service.create(user.id(), request);
     }
 
     @GetMapping
-    public List<MazeSummary> list() {
-        return service.list();
+    public List<MazeSummary> list(@AuthenticationPrincipal AuthUser user) {
+        return service.list(user.id());
     }
 
     @GetMapping("/{id}")
-    public MazeResponse get(@PathVariable Long id) {
-        return service.get(id);
+    public MazeResponse get(@AuthenticationPrincipal AuthUser user, @PathVariable Long id) {
+        return service.get(user.id(), id);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id) {
-        service.delete(id);
+    public void delete(@AuthenticationPrincipal AuthUser user, @PathVariable Long id) {
+        service.delete(user.id(), id);
     }
 }

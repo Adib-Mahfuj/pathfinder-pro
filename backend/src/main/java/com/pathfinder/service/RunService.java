@@ -9,19 +9,23 @@ import com.pathfinder.dto.RunRequest;
 import com.pathfinder.dto.RunResponse;
 import com.pathfinder.entity.RunRecord;
 import com.pathfinder.repository.RunRecordRepository;
+import com.pathfinder.repository.UserRepository;
 
 @Service
 public class RunService {
 
     private final RunRecordRepository repository;
+    private final UserRepository userRepository;
 
-    public RunService(RunRecordRepository repository) {
+    public RunService(RunRecordRepository repository, UserRepository userRepository) {
         this.repository = repository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
-    public RunResponse create(RunRequest req) {
+    public RunResponse create(Long userId, RunRequest req) {
         RunRecord run = new RunRecord();
+        run.setOwner(userRepository.getReferenceById(userId));
         run.setAlgorithm(req.algorithm());
         run.setVisitedCount(req.visitedCount());
         run.setPathLength(req.pathLength());
@@ -30,8 +34,8 @@ public class RunService {
     }
 
     @Transactional(readOnly = true)
-    public List<RunResponse> latest() {
-        return repository.findTop50ByOrderByCreatedAtDesc().stream()
+    public List<RunResponse> latest(Long userId) {
+        return repository.findTop50ByOwnerIdOrderByCreatedAtDesc(userId).stream()
                 .map(this::toResponse)
                 .toList();
     }

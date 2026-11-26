@@ -12,19 +12,21 @@ import com.pathfinder.dto.MazeResponse;
 import com.pathfinder.dto.MazeSummary;
 import com.pathfinder.entity.Maze;
 import com.pathfinder.repository.MazeRepository;
+import com.pathfinder.repository.UserRepository;
 
 @Service
 public class MazeService {
 
     private final MazeRepository repository;
+    private final UserRepository userRepository;
 
-    // Spring injects the repository automatically
-    public MazeService(MazeRepository repository) {
+    public MazeService(MazeRepository repository, UserRepository userRepository) {
         this.repository = repository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
-    public MazeResponse create(MazeRequest req) {
+    public MazeResponse create(Long userId, MazeRequest req) {
         // Start and end must be inside the grid
         if (req.startRow() >= req.gridRows() || req.endRow() >= req.gridRows()
                 || req.startCol() >= req.gridCols() || req.endCol() >= req.gridCols()) {
@@ -33,6 +35,8 @@ public class MazeService {
         }
 
         Maze maze = new Maze();
+        // getReferenceById links the owner by id without loading the whole user
+        maze.setOwner(userRepository.getReferenceById(userId));
         maze.setName(req.name().trim());
         maze.setGridRows(req.gridRows());
         maze.setGridCols(req.gridCols());
@@ -46,29 +50,28 @@ public class MazeService {
     }
 
     @Transactional(readOnly = true)
-    public List<MazeSummary> list() {
-        return repository.findAllByOrderByCreatedAtDesc().stream()
+    public List<MazeSummary> list(Long userId) {
+        return repository.findAllByOwnerIdOrderByCreatedAtDesc(userId).stream()
                 .map(m -> new MazeSummary(m.getId(), m.getName(), m.getCreatedAt()))
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public MazeResponse get(Long id) {
-        return toResponse(find(id));
+    public MazeResponse get(Long userId, Long id) {
+        return toResponse(find(userId, id));
     }
 
     @Transactional
-    public void delete(Long id) {
-        repository.delete(find(id));
+    public void delete(Long userId, Long id) {
+        repository.delete(find(userId, id));
     }
 
-    // Load a maze or answer with 404
-    private Maze find(Long id) {
-        return repository.findById(id).orElseThrow(() ->
+    // Someone else's maze gives 404 too, so its existence is not revealed
+    private Maze find(Long userId, Long id) {
+        return repository.findByIdAndOwnerId(id, userId).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Maze not found"));
     }
 
-    // Convert an entity to the object sent to the frontend
     private MazeResponse toResponse(Maze m) {
         return new MazeResponse(m.getId(), m.getName(), m.getGridRows(), m.getGridCols(),
                 m.getStartRow(), m.getStartCol(), m.getEndRow(), m.getEndCol(),

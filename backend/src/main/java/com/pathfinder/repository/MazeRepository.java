@@ -1,14 +1,17 @@
 package com.pathfinder.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.pathfinder.entity.Maze;
 
-// JpaRepository already gives save, findById, findAll, deleteById, etc.
 public interface MazeRepository extends JpaRepository<Maze, Long> {
 
-    // Spring builds the SQL from the method name: newest first
-    List<Maze> findAllByOrderByCreatedAtDesc();
+    // Only the mazes of one user, newest first
+    List<Maze> findAllByOwnerIdOrderByCreatedAtDesc(Long ownerId);
+
+    // A maze is found only if it belongs to that user
+    Optional<Maze> findByIdAndOwnerId(Long id, Long ownerId);
 }
